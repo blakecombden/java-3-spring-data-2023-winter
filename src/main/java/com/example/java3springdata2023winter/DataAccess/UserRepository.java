@@ -1,5 +1,6 @@
-package com.example.java3springdata2023winter;
+package com.example.java3springdata2023winter.DataAccess;
 
+import com.example.java3springdata2023winter.User;
 import org.springframework.data.repository.CrudRepository;
 
 /**

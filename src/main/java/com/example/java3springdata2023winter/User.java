@@ -8,9 +8,11 @@ import jakarta.persistence.Id;
 /**
  * User Entity model. This object will be used by Hibernate to create a table in the database
  *
+ * Data Access Object
+ *
  * @author Josh
  */
-@Entity
+@Entity(name = "user")
 public class User {
 
     @Id
@@ -18,6 +20,7 @@ public class User {
     private Integer id;
     private String name;
     private String email;
+    //TODO Add date of birth for Driving purposes - model the home year built
 
     public Integer getId() {
         return id;
@@ -42,4 +45,5 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
+
 }
