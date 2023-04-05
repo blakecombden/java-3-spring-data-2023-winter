@@ -4,13 +4,12 @@ import com.example.java3springdata2023winter.DataAccess.HomeRepository;
 import com.example.java3springdata2023winter.POJOS.Home;
 import com.example.java3springdata2023winter.User;
 import com.example.java3springdata2023winter.DataAccess.UserRepository;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.LinkedList;
 import java.util.Optional;
 
 @Controller //This means that this class is a Controller
@@ -33,12 +32,12 @@ public class MainController {
 
     /**
      * Get Mapping for User based on ID
-     * @param id user id
+     * @param userId user id
      * @return user object
      */
-    @GetMapping(path = RESTNouns.USER + "/{id}")
-    public @ResponseBody Optional<User> getUserWithId(@PathVariable Integer id){
-        return userRepository.findById(id);
+    @GetMapping(path = RESTNouns.USER + "/{user_id}")
+    public @ResponseBody Optional<User> getUserWithId(@PathVariable(name = "user_id") Integer userId){
+        return userRepository.findById(userId);
     }
 
     /**
@@ -58,14 +57,14 @@ public class MainController {
 
     /**
      * Put Mapping for User based on ID
-     * @param id user id
+     * @param userId user id
      * @param name name update
      * @param email email update
      * @return message stating success / failure
      */
-    @PutMapping (path=RESTNouns.USER + "/{id}")
-    public @ResponseBody String updateUser(@PathVariable Integer id, @RequestParam String name, @RequestParam String email){
-        Optional<User> user = userRepository.findById(id);
+    @PutMapping (path=RESTNouns.USER + "/{user_id}")
+    public @ResponseBody String updateUser(@PathVariable(name = "user_id")  Integer userId, @RequestParam String name, @RequestParam String email){
+        Optional<User> user = userRepository.findById(userId);
         if(user.isPresent()){
             user.get().setName(name);
             user.get().setEmail(email);
@@ -77,12 +76,12 @@ public class MainController {
 
     /**
      * Delete Mapping for User based on ID
-     * @param id user id
+     * @param userId user id
      * @return message stating success / failure
      */
-    @DeleteMapping (path=RESTNouns.USER + "/{id}")
-    public @ResponseBody String deleteUser(@PathVariable Integer id){
-        Optional<User> user = userRepository.findById(id);
+    @DeleteMapping (path=RESTNouns.USER + "/{user_id}")
+    public @ResponseBody String deleteUser(@PathVariable(name = "user_id")  Integer userId){
+        Optional<User> user = userRepository.findById(userId);
         if(user.isPresent()){
             userRepository.delete(user.get());
             return "Deleted";
@@ -101,18 +100,33 @@ public class MainController {
         return homeRepository.findAll();
     }
 
-    //TODO HOME - GET / Get all Homes by a USER
+    /**
+     * Get Mapping for Home based on ID
+     * @param userId user id
+     * @return home object
+     */
+    @GetMapping(path=RESTNouns.USER + "/{user_id}" + RESTNouns.HOME)
+    public @ResponseBody Iterable<Home> getAllHomesByUser(@PathVariable(name = "user_id") Integer userId){
+        Optional<User> user = userRepository.findById(userId);
+        Iterable<Home> homes = new LinkedList<>();
+
+        if(user.isPresent()){
+            homes = homeRepository.getAllByUserId(user.get().getId());
+        }
+
+        return homes;
+    }
 
     /**
      * Post Mapping for Home
-     * @param id user id
+     * @param userId user id
      * @param dateBuilt date built
      * @param value value
      * @param heatingType heating type
      * @return
      */
-    @PostMapping(path=RESTNouns.USER + RESTNouns.USER_ID + RESTNouns.HOME)
-    public @ResponseBody String addNewHome(@PathVariable Integer id,
+    @PostMapping(path=RESTNouns.USER + "/{user_id}" + RESTNouns.HOME)
+    public @ResponseBody String addNewHome(@PathVariable(name = "user_id") Integer userId,
                                            @RequestParam LocalDate dateBuilt, @RequestParam int value,
                                            @RequestParam("heatingtype") String heatingType){
         Home home = new Home();
@@ -124,7 +138,7 @@ public class MainController {
         home.setLocation(Home.Location.RURAL);
 
         //Scope the customer
-        Optional<User> user = userRepository.findById(id);
+        Optional<User> user = userRepository.findById(userId);
         if(user.isPresent()){
             home.setUser(user.get());   //Link it to the user
             homeRepository.save(home);
@@ -135,28 +149,30 @@ public class MainController {
     }
 
     //TODO Simplify this to Home ID, which is unqiue
-//    /**
-//     * Put Mapping for Home
-//     * @param id home id
-//     * @param dateBuilt date built
-//     * @param value value
-//     * @param heatingType heating type
-//     * @return message stating success / failure
-//     */
-//    @PutMapping (path=RESTNouns.USER + RESTNouns.USER_ID + RESTNouns.HOME)
-//    public @ResponseBody String updateHome(@PathVariable Integer id,
-//                                           @RequestParam LocalDate dateBuilt, @RequestParam int value,
-//                                           @RequestParam("heatingtype") String heatingType){
-//        Optional<Home> home = homeRepository.findById(id);
-//        if(home.isPresent()){
-//            home.get().setYearBuilt(dateBuilt);
-//            home.get().setValue(value);
-//            home.get().setHeatingType(Home.HeatingType.valueOf(heatingType));
-//            homeRepository.save(home.get());
-//            return "Updated";
-//        }
-//        return "Home not found";
-//    }
+    /**
+     * Put Mapping for Home
+     * @param userId home id
+     * @param dateBuilt date built
+     * @param value value
+     * @param heatingType heating type
+     * @return message stating success / failure
+     */
+    @PutMapping (path=RESTNouns.USER + "/{user_id}" + RESTNouns.HOME + "/{home_id}" )
+    public @ResponseBody String updateHome(@PathVariable(name = "user_id")  Integer userId,
+                                           @PathVariable(name = "home_id")  Integer homeId,
+                                           @RequestParam LocalDate dateBuilt, @RequestParam int value,
+                                           @RequestParam("heatingtype") String heatingType){
+        Optional<Home> home = homeRepository.findById(homeId);
+
+        if(home.isPresent()){
+            home.get().setYearBuilt(dateBuilt);
+            home.get().setValue(value);
+            home.get().setHeatingType(Home.HeatingType.valueOf(heatingType));
+            homeRepository.save(home.get());
+            return "Updated";
+        }
+        return "Home not found";
+    }
 
     //TODO HOME - DELETE
 
