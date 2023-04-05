@@ -16,6 +16,7 @@ import java.time.Period;
 public class Home {
 
     @Id @GeneratedValue(strategy = GenerationType.AUTO) private Integer id;
+
     @JsonFormat(pattern="yyyy-MM-dd")  private LocalDate yearBuilt;
     private int value;
     @Enumerated(EnumType.ORDINAL) private HeatingType heatingType;
@@ -62,6 +63,14 @@ public class Home {
          * Rural Location
          */
         RURAL
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public LocalDate getYearBuilt() {
