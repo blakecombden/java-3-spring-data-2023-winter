@@ -90,7 +90,6 @@ public class MainController {
     }
 
     //HOME REST
-
     /**
      * Get Mapping for Home
      * @return all homes
@@ -108,12 +107,11 @@ public class MainController {
     @GetMapping(path=RESTNouns.USER + "/{user_id}" + RESTNouns.HOME)
     public @ResponseBody Iterable<Home> getAllHomesByUser(@PathVariable(name = "user_id") Integer userId){
         Optional<User> user = userRepository.findById(userId);
-        Iterable<Home> homes = new LinkedList<>();
+        Iterable<Home> homes = new LinkedList<>();  //Hack to build an empty list / iterable
 
         if(user.isPresent()){
             homes = homeRepository.getAllByUserId(user.get().getId());
         }
-
         return homes;
     }
 
@@ -148,7 +146,6 @@ public class MainController {
         }
     }
 
-    //TODO Simplify this to Home ID, which is unqiue
     /**
      * Put Mapping for Home
      * @param userId home id
@@ -162,19 +159,38 @@ public class MainController {
                                            @PathVariable(name = "home_id")  Integer homeId,
                                            @RequestParam LocalDate dateBuilt, @RequestParam int value,
                                            @RequestParam("heatingtype") String heatingType){
-        Optional<Home> home = homeRepository.findById(homeId);
 
+        Optional<Home> home = homeRepository.findById(homeId);
+        //Find the home and make sure it belongs to the user
         if(home.isPresent()){
-            home.get().setYearBuilt(dateBuilt);
-            home.get().setValue(value);
-            home.get().setHeatingType(Home.HeatingType.valueOf(heatingType));
-            homeRepository.save(home.get());
-            return "Updated";
+            Optional<User> user = userRepository.findById(userId);
+            if(user.isPresent() && home.get().getUser().getId() == user.get().getId()){
+                home.get().setYearBuilt(dateBuilt);
+                home.get().setValue(value);
+                home.get().setHeatingType(Home.HeatingType.valueOf(heatingType));
+                homeRepository.save(home.get());
+                return "Updated";
+            }
         }
         return "Home not found";
     }
 
-    //TODO HOME - DELETE
+    @DeleteMapping (path=RESTNouns.USER + "/{user_id}" + RESTNouns.HOME + "/{home_id}" )
+    public @ResponseBody String deleteHome(@PathVariable(name = "user_id")  Integer userId,
+                                           @PathVariable(name = "home_id")  Integer homeId){
+        Optional<Home> home = homeRepository.findById(homeId);
+        //Find the home and make sure it belongs to the user
+        if(home.isPresent()){
+            Optional<User> user = userRepository.findById(userId);
+            if(user.isPresent() && home.get().getUser().getId() == user.get().getId()){
+                homeRepository.delete(home.get());
+                return "Deleted";
+            }
+        }
+        return "Home not found";
+    }
+
+
 
     //Hint: Quote REST
     /*
